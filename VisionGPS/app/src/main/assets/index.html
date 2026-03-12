@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VISION GPS">
+<title>VISION GPS - أكواد المساحة</title>
+<style>
+/* ===== THEMES ===== */
+:root {
+  --bg:#0a0f1a; --surface:#111827; --card:#1a2235; --border:#1e2d45;
+  --accent:#f59e0b; --accent2:#3b82f6; --text:#e2e8f0; --muted:#64748b;
+  --green:#10b981; --red:#ef4444; --shadow:rgba(0,0,0,0.6);
+  --header-bg:linear-gradient(135deg,#0f172a,#1a2235);
+  --input-bg:#0a0f1a; --modal-bg:#111827;
+}
+[data-theme="day"] {
+  --bg:#f0f4f8; --surface:#ffffff; --card:#ffffff; --border:#d1dbe8;
+  --accent:#d97706; --accent2:#2563eb; --text:#1e293b; --muted:#64748b;
+  --green:#059669; --red:#dc2626; --shadow:rgba(0,0,0,0.15);
+  --header-bg:linear-gradient(135deg,#1e3a5f,#2563eb);
+  --input-bg:#ffffff; --modal-bg:#ffffff;
+}
+[data-theme="outdoor"] {
+  --bg:#1a1a00; --surface:#252500; --card:#2d2d00; --border:#4a4a00;
+  --accent:#ffff00; --accent2:#00ff88; --text:#ffffff; --muted:#cccc44;
+  --green:#00ff44; --red:#ff4444; --shadow:rgba(0,0,0,0.8);
+  --header-bg:linear-gradient(135deg,#1a1a00,#2d2d00);
+  --input-bg:#1a1a00; --modal-bg:#252500;
+}
+
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;
+  min-height:100vh; overflow-x:hidden;
+  transition:background 0.3s, color 0.3s;
+}
+
+/* ===== HEADER ===== */
+header {
+  background:var(--header-bg);
+  border-bottom:2.5px solid var(--accent);
+  padding:14px 16px 12px;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 4px 24px var(--shadow);
+}
+.header-row1 {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:11px;
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-icon {
+  width:40px; height:40px; background:var(--accent);
+  border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:900; color:#000;
+}
+.logo-texts { display:flex; flex-direction:column; }
+.logo-name { font-size:18px; font-weight:900; letter-spacing:2px; color:var(--accent); }
+.logo-sub { font-size:9px; color:var(--muted); letter-spacing:1px; }
+
+/* Theme switcher */
+.theme-btns { display:flex; gap:5px; }
+.theme-btn {
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  border-radius:8px; padding:6px 9px; font-size:14px; cursor:pointer;
+  transition:all 0.2s; color:var(--text);
+}
+.theme-btn.active { background:var(--accent); border-color:var(--accent); color:#000; }
+
+/* Search */
+.search-wrap { position:relative; }
+.search-input {
+  width:100%; background:var(--input-bg); border:1.5px solid var(--border);
+  border-radius:12px; padding:11px 44px 11px 44px;
+  color:var(--text); font-family:inherit; font-size:15px;
+  outline:none; transition:border-color 0.2s;
+}
+.search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(245,158,11,0.15); }
+.search-input::placeholder { color:var(--muted); }
+.si-left { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:17px; pointer-events:none; }
+.si-right {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  background:var(--border); border:none; color:var(--text);
+  width:26px; height:26px; border-radius:50%; font-size:12px;
+  cursor:pointer; display:none; align-items:center; justify-content:center;
+}
+.si-right.show { display:flex; }
+
+/* ===== LEGEND ===== */
+.legend {
+  padding:8px 14px; display:flex; gap:14px; font-size:11px;
+  border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap;
+}
+.leg-item { display:flex; align-items:center; gap:5px; color:var(--muted); }
+.leg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+/* ===== CATEGORY FILTERS ===== */
+.filters {
+  padding:10px 12px; display:flex; gap:7px;
+  overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.filters::-webkit-scrollbar { display:none; }
+.filter-btn {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:6px 13px;
+  font-family:inherit; font-size:12px; color:var(--muted);
+  cursor:pointer; white-space:nowrap; transition:all 0.2s; flex-shrink:0;
+}
+.filter-btn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
+
+/* Results bar */
+.results-bar {
+  padding:8px 14px; font-size:12px; color:var(--muted);
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--surface); border-bottom:1px solid var(--border);
+}
+.rc { color:var(--accent); font-weight:700; }
+
+/* ===== CARDS ===== */
+.cards-container {
+  padding:10px 10px 110px;
+  display:grid; grid-template-columns:1fr 1fr; gap:9px;
+}
+.card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:13px 11px 13px 11px;
+  cursor:pointer; transition:all 0.18s; position:relative;
+  overflow:hidden; animation:fadeIn 0.25s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.card:active { transform:scale(0.96); }
+[data-theme="night"] .card:active,[data-theme="outdoor"] .card:active { background:#1e2d45; }
+[data-theme="day"] .card:active { background:#e8f0fe; }
+
+.card-type-dot {
+  position:absolute; top:10px; left:10px;
+  width:8px; height:8px; border-radius:50%;
+}
+.dot-P { background:var(--green); }
+.dot-S { background:var(--accent2); }
+.dot-PS { background:var(--accent); }
+
+.card-icon { font-size:24px; margin-bottom:5px; display:block; }
+.card-code {
+  font-size:22px; font-weight:700; color:var(--accent);
+  margin-bottom:4px; line-height:1;
+  font-family:'Courier New',Courier,monospace;
+}
+.card-name { font-size:11px; color:var(--text); line-height:1.4; font-weight:600; }
+.card-cat {
+  margin-top:7px; font-size:10px; color:var(--muted);
+  background:var(--bg); border-radius:6px; padding:2px 6px; display:inline-block;
+}
+.type-lbl {
+  position:absolute; bottom:8px; left:10px;
+  font-size:9px; font-weight:700; font-family:monospace;
+}
+.type-lbl.P{color:var(--green)} .type-lbl.S{color:var(--accent2)} .type-lbl.PS{color:var(--accent)}
+
+/* No results */
+.no-results { text-align:center; padding:60px 20px; color:var(--muted); grid-column:1/-1; }
+.no-results .nr-icon { font-size:52px; margin-bottom:12px; }
+.no-results .nr-msg { font-size:16px; color:var(--text); margin-bottom:6px; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.82);
+  z-index:200; display:none; align-items:flex-end;
+  backdrop-filter:blur(5px);
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--modal-bg); border:1px solid var(--border);
+  border-radius:24px 24px 0 0; padding:22px 22px 36px;
+  width:100%; max-width:600px; margin:0 auto;
+  animation:slideUp 0.28s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
+.modal-big-icon { text-align:center; font-size:56px; margin-bottom:4px; }
+.modal-code {
+  font-size:52px; font-weight:700; color:var(--accent);
+  text-align:center; line-height:1; margin-bottom:6px;
+  font-family:'Courier New',Courier,monospace;
+}
+.modal-name { font-size:17px; font-weight:700; text-align:center; margin-bottom:20px; line-height:1.4; }
+.modal-details { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:18px; }
+.detail-box {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:13px; text-align:center;
+}
+.detail-lbl { font-size:11px; color:var(--muted); margin-bottom:4px; }
+.detail-val { font-size:15px; font-weight:700; color:var(--accent2); }
+.copy-btn {
+  width:100%; background:var(--accent); border:none; border-radius:14px;
+  padding:15px; font-family:inherit; font-size:16px; font-weight:700;
+  color:#000; cursor:pointer; transition:opacity 0.2s; letter-spacing:1px;
+}
+.copy-btn:active { opacity:0.8; }
+.close-btn {
+  width:100%; background:transparent; border:1.5px solid var(--border);
+  border-radius:14px; padding:11px; font-family:inherit;
+  font-size:14px; color:var(--muted); cursor:pointer; margin-top:9px;
+}
+
+/* ===== INSTALL BANNER ===== */
+#installBanner {
+  display:none; position:fixed; bottom:0; left:0; right:0;
+  background:var(--surface); border-top:2px solid var(--accent);
+  padding:13px 18px; z-index:300; align-items:center;
+  justify-content:space-between; gap:12px;
+}
+.ib-text { font-size:13px; }
+.ib-title { font-weight:700; color:var(--accent); }
+.ib-sub { color:var(--muted); font-size:11px; }
+.ib-btn {
+  background:var(--accent); border:none; border-radius:10px;
+  padding:10px 20px; font-family:inherit; font-weight:700;
+  font-size:14px; color:#000; cursor:pointer; white-space:nowrap;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body data-theme="night">
+
+<!-- HEADER -->
+<header>
+  <div class="header-row1">
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div class="logo-texts">
+        <div class="logo-name">VISION GPS</div>
+        <div class="logo-sub">دليل أكواد المساحة · <span id="totalBadge">219</span> كود</div>
+      </div>
+    </div>
+    <div class="theme-btns">
+      <button class="theme-btn active" onclick="setTheme('night',this)" title="وضع ليلي">🌙</button>
+      <button class="theme-btn" onclick="setTheme('day',this)" title="وضع نهاري">☀️</button>
+      <button class="theme-btn" onclick="setTheme('outdoor',this)" title="وضع خارجي">🌆</button>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <span class="si-left">🔍</span>
+    <input type="text" class="search-input" id="searchInput"
+           placeholder="ابحث بالكود أو الاسم... مثال: 280 أو Tree"
+           autocomplete="off" autocorrect="off" autocapitalize="off"
+           oninput="onSearch(this)">
+    <button class="si-right" id="clearBtn" onclick="clearSearch()">✕</button>
+  </div>
+</header>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div> نقطة P</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--accent2)"></div> خط S</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div> كلاهما P/S</div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters" id="filtersBar"></div>
+
+<!-- RESULTS BAR -->
+<div class="results-bar">
+  <span>النتائج: <span class="rc" id="resultsCount">0</span></span>
+  <span id="activeFilter" style="color:var(--accent);font-size:11px"></span>
+</div>
+
+<!-- CARDS -->
+<div class="cards-container" id="cardsContainer"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-big-icon" id="modalIcon"></div>
+    <div class="modal-code" id="modalCode"></div>
+    <div class="modal-name" id="modalName"></div>
+    <div class="modal-details">
+      <div class="detail-box">
+        <div class="detail-lbl">النوع</div>
+        <div class="detail-val" id="modalType"></div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-lbl">التصنيف</div>
+        <div class="detail-val" id="modalCat" style="font-size:11px;font-family:inherit"></div>
+      </div>
+    </div>
+    <button class="copy-btn" id="copyBtn">📋 نسخ الكود</button>
+    <button class="close-btn" onclick="closeModal()">✖ إغلاق</button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner">
+  <div class="ib-text">
+    <div class="ib-title">📲 ثبّت التطبيق على هاتفك</div>
+    <div class="ib-sub">يعمل بدون إنترنت بعد التثبيت</div>
+  </div>
+  <button class="ib-btn" onclick="installApp()">تثبيت</button>
+</div>
+
+<script>
+// ===========================
+// ICONS MAP (emoji per name keyword)
+// ===========================
+function getIcon(name, cat) {
+  const n = name.toLowerCase();
+  // Vegetation
+  if (n.includes('tree') || n.includes('palm') || n.includes('coconut')) return '🌳';
+  if (n.includes('vegetation') || n.includes('landscape')) return '🌿';
+  if (n.includes('line of trees')) return '🌲';
+  // Roads & Transport
+  if (n.includes('asphalt') || n.includes('road') || n.includes('pavement')) return '🛣️';
+  if (n.includes('bridge')) return '🌉';
+  if (n.includes('rail') || n.includes('track')) return '🛤️';
+  if (n.includes('foot path')) return '🚶';
+  if (n.includes('kerb')) return '⬛';
+  if (n.includes('wadi')) return '🏜️';
+  if (n.includes('apron')) return '✈️';
+  if (n.includes('bus stop')) return '🚌';
+  // Manholes & Inspection
+  if (n.includes('manhole')) return '⭕';
+  if (n.includes('catch basin')) return '🕳️';
+  if (n.includes('gully')) return '💧';
+  // Electrical & Telecom
+  if (n.includes('electric') || n.includes('electricity') || n.includes('pylon')) return '⚡';
+  if (n.includes('telephone') || n.includes('communication')) return '📞';
+  if (n.includes('lamp post') || n.includes('garden light') || n.includes('flood light')) return '💡';
+  if (n.includes('traffic light') || n.includes('traffic signal')) return '🚦';
+  if (n.includes('speaker')) return '📢';
+  if (n.includes('camera')) return '📷';
+  if (n.includes('fibre optic')) return '🔌';
+  if (n.includes('junction box') || n.includes('switch box') || n.includes('control panel')) return '🔧';
+  // Fire & Safety
+  if (n.includes('fire hydrant')) return '🚒';
+  if (n.includes('fire alarm') || n.includes('fire box')) return '🔴';
+  if (n.includes('foam inlet')) return '🧯';
+  if (n.includes('warning light')) return '⚠️';
+  // Water & Pipeline
+  if (n.includes('water tap')) return '🚿';
+  if (n.includes('sprinkler')) return '💦';
+  if (n.includes('valve')) return '🔩';
+  if (n.includes('pipeline') && n.includes('oil')) return '🛢️';
+  if (n.includes('pipeline') && n.includes('gas')) return '🔥';
+  if (n.includes('pipeline') && n.includes('water')) return '💧';
+  if (n.includes('pipeline') || n.includes('flowline')) return '🔗';
+  if (n.includes('cable') && n.includes('buried')) return '🌑';
+  if (n.includes('cable')) return '🔌';
+  if (n.includes('drain') && n.includes('open')) return '🌊';
+  if (n.includes('culvert')) return '🕳️';
+  if (n.includes('dead end')) return '🚫';
+  // Buildings & Structures
+  if (n.includes('building')) return '🏢';
+  if (n.includes('tank')) return '🛢️';
+  if (n.includes('oil platform') || n.includes('oil well')) return '⛽';
+  if (n.includes('concrete')) return '🧱';
+  if (n.includes('porta cabin') || n.includes('shed') || n.includes('temporary')) return '🏠';
+  if (n.includes('canopy') || n.includes('roof')) return '🏚️';
+  if (n.includes('manifold')) return '⚙️';
+  // Signs & Posts
+  if (n.includes('sign') || n.includes('road sign')) return '🪧';
+  if (n.includes('flag')) return '🚩';
+  if (n.includes('mirror')) return '🪞';
+  if (n.includes('advertisement')) return '📋';
+  if (n.includes('post box')) return '📬';
+  if (n.includes('filling point')) return '⛽';
+  // Geotechnical
+  if (n.includes('borehole')) return '🕳️';
+  if (n.includes('penetration') || n.includes('test') || n.includes('resistivity')) return '🔬';
+  if (n.includes('pit')) return '⛏️';
+  // Boundary
+  if (n.includes('fence') || n.includes('wall') || n.includes('bund')) return '🧱';
+  if (n.includes('barrier')) return '🚧';
+  if (n.includes('bollard')) return '🔴';
+  if (n.includes('boundary marker')) return '📌';
+  // Survey
+  if (n.includes('survey') || n.includes('control') || n.includes('stake')) return '📍';
+  // Stairs & Small items
+  if (n.includes('step')) return '🪜';
+  if (n.includes('gate')) return '🚪';
+  if (n.includes('trench')) return '⬇️';
+  if (n.includes('dust bin')) return '🗑️';
+  if (n.includes('vaporizer')) return '🌫️';
+  if (n.includes('generator')) return '🔋';
+  if (n.includes('marker')) return '📌';
+  if (n.includes('anchor')) return '⚓';
+  if (n.includes('pipe support')) return '🔩';
+  if (n.includes('flare')) return '🔥';
+  if (n.includes('vent')) return '💨';
+  if (n.includes('overhead') || n.includes('transmission')) return '🗼';
+  // Category fallbacks
+  const catIcons = {
+    'حدود':'🧱','جيوتقنية':'⛏️','أرض':'🌍','طرق':'🛣️',
+    'ميادين':'🏗️','غرف تفتيش':'⭕','خدمات':'⚡',
+    'خطوط فوق أرض':'🔧','خطوط مدفونة':'🌑',
+    'منشآت':'🏢','نباتات':'🌳','مساحة':'📍','نهاية خط':'🚫'
+  };
+  return catIcons[cat] || '📌';
+}
+
+// Category icons for filter tabs
+const CAT_ICONS = {
+  'الكل':'📋','حدود':'🧱','جيوتقنية':'⛏️','أرض':'🌍','طرق':'🛣️',
+  'ميادين':'🏗️','غرف تفتيش':'⭕','خدمات':'⚡',
+  'خطوط فوق أرض':'🔧','خطوط مدفونة':'🌑',
+  'منشآت':'🏢','نباتات':'🌳','مساحة':'📍','نهاية خط':'🚫'
+};
+
+// ===========================
+// ALL CODES DATA
+// ===========================
+const CODES = [
+  // BOUNDARY
+  {code:"149",name:"Boundary, General",cat:"حدود",type:"S"},
+  {code:"152",name:"Wood Fence",cat:"حدود",type:"S"},
+  {code:"153",name:"Barrier",cat:"حدود",type:"S"},
+  {code:"154",name:"Wall, General",cat:"حدود",type:"S"},
+  {code:"155",name:"Bollard Pole",cat:"حدود",type:"PS"},
+  {code:"156",name:"Chain Link Fence",cat:"حدود",type:"S"},
+  {code:"157",name:"Sheet Fence",cat:"حدود",type:"S"},
+  {code:"158",name:"Barbed Wire Fence",cat:"حدود",type:"S"},
+  {code:"160",name:"Bund",cat:"حدود",type:"S"},
+  // GEOTECHNICAL
+  {code:"171",name:"Permeability Test (PT)",cat:"جيوتقنية",type:"P"},
+  {code:"172",name:"Trail Pit (TP)",cat:"جيوتقنية",type:"P"},
+  {code:"173",name:"California Bearing Ratio (CBR)",cat:"جيوتقنية",type:"P"},
+  {code:"174",name:"Thermal Resistivity (TR)",cat:"جيوتقنية",type:"P"},
+  {code:"175",name:"Geo Tech. Locations In General",cat:"جيوتقنية",type:"P"},
+  {code:"176",name:"Borehole (BH)",cat:"جيوتقنية",type:"P"},
+  {code:"177",name:"Cone Penetration Test (CPT)",cat:"جيوتقنية",type:"P"},
+  {code:"178",name:"Electrical Resistivity (ER)",cat:"جيوتقنية",type:"P"},
+  {code:"179",name:"Plate Load Test (PLT)",cat:"جيوتقنية",type:"P"},
+  {code:"180",name:"Cross Hole (CH)",cat:"جيوتقنية",type:"P"},
+  {code:"170",name:"Field Dry Density Test (FDD)",cat:"جيوتقنية",type:"P"},
+  // GROUND
+  {code:"134",name:"Bank/Slope, Manmade/Concrete, Top",cat:"أرض",type:"S"},
+  {code:"135",name:"Bank/Slope, Manmade/Concrete, Bottom",cat:"أرض",type:"S"},
+  {code:"142",name:"Change of Surface",cat:"أرض",type:"S"},
+  {code:"159",name:"Pit, General",cat:"أرض",type:"S"},
+  {code:"225",name:"Spot Height",cat:"أرض",type:"P"},
+  {code:"127",name:"Finish Floor Level",cat:"أرض",type:"P"},
+  // ROADS
+  {code:"101",name:"Rail Line/Hand Rail",cat:"طرق",type:"S"},
+  {code:"110",name:"Asphalt Road",cat:"طرق",type:"S"},
+  {code:"111",name:"Road, Centreline",cat:"طرق",type:"S"},
+  {code:"112",name:"Pavement, Marking",cat:"طرق",type:"S"},
+  {code:"113",name:"Track",cat:"طرق",type:"S"},
+  {code:"114",name:"Expansion Joint, Bridge",cat:"طرق",type:"S"},
+  {code:"115",name:"Retaining Wall, Top",cat:"طرق",type:"S"},
+  {code:"116",name:"Retaining Wall",cat:"طرق",type:"S"},
+  {code:"117",name:"Foot Path",cat:"طرق",type:"S"},
+  {code:"118",name:"Wadi Area",cat:"طرق",type:"S"},
+  {code:"119",name:"Kerb (Top)",cat:"طرق",type:"S"},
+  {code:"120",name:"Bridge Abutment",cat:"طرق",type:"S"},
+  {code:"121",name:"Steel Bridge",cat:"طرق",type:"S"},
+  {code:"125",name:"Rig Road",cat:"طرق",type:"S"},
+  {code:"126",name:"Aggregate Road",cat:"طرق",type:"S"},
+  {code:"186",name:"Tiled Area, Edge",cat:"طرق",type:"S"},
+  {code:"189",name:"Paving, Edge",cat:"طرق",type:"S"},
+  {code:"245",name:"Apron Edge",cat:"طرق",type:"S"},
+  // AIRFIELDS
+  {code:"100",name:"Trench",cat:"ميادين",type:"S"},
+  {code:"102",name:"Angle",cat:"ميادين",type:"S"},
+  {code:"151",name:"Iron Post",cat:"ميادين",type:"P"},
+  {code:"210",name:"Steps",cat:"ميادين",type:"S"},
+  {code:"212",name:"Gate",cat:"ميادين",type:"S"},
+  {code:"213",name:"Telephone Cabin",cat:"ميادين",type:"S"},
+  // MANHOLES
+  {code:"271",name:"Manhole, Irrigation",cat:"غرف تفتيش",type:"P"},
+  {code:"271A",name:"Manhole, Irrigation (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"272",name:"Manhole, Brackish Water",cat:"غرف تفتيش",type:"S"},
+  {code:"272A",name:"Manhole, Brackish Water (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"273",name:"Manhole, Gas",cat:"غرف تفتيش",type:"P"},
+  {code:"273A",name:"Manhole, Gas (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"274",name:"Manhole, Fresh Water",cat:"غرف تفتيش",type:"S"},
+  {code:"274A",name:"Manhole, Fresh Water (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"275",name:"Manhole, General (Circular)",cat:"غرف تفتيش",type:"P"},
+  {code:"276",name:"Manhole, General (Rectangular)",cat:"غرف تفتيش",type:"S"},
+  {code:"277",name:"Manhole, Telephone",cat:"غرف تفتيش",type:"P"},
+  {code:"277A",name:"Manhole, Telephone (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"278",name:"Manhole, Electric",cat:"غرف تفتيش",type:"P"},
+  {code:"278A",name:"Manhole, Electric (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"278B",name:"Manhole Electric (extended)",cat:"غرف تفتيش",type:"P"},
+  {code:"279",name:"Manhole, Sewerage",cat:"غرف تفتيش",type:"P"},
+  {code:"279A",name:"Manhole, Sewerage (Round)",cat:"غرف تفتيش",type:"P"},
+  {code:"280",name:"Manhole, Storm Water",cat:"غرف تفتيش",type:"PS"},
+  {code:"280A",name:"Manhole, Storm Water (Round)",cat:"غرف تفتيش",type:"P"},
+  // SERVICES
+  {code:"281",name:"Flag Post",cat:"خدمات",type:"P"},
+  {code:"282",name:"Camera Post",cat:"خدمات",type:"P"},
+  {code:"283",name:"Mirror Post",cat:"خدمات",type:"P"},
+  {code:"284",name:"Road Sign",cat:"خدمات",type:"P"},
+  {code:"285",name:"Sign Post, Single",cat:"خدمات",type:"P"},
+  {code:"286",name:"Sign Post, Double",cat:"خدمات",type:"P"},
+  {code:"287",name:"Traffic Signal",cat:"خدمات",type:"P"},
+  {code:"288",name:"Advertisement Board",cat:"خدمات",type:"PS"},
+  {code:"290",name:"Earth Pit",cat:"خدمات",type:"S"},
+  {code:"291",name:"Valve Pit",cat:"خدمات",type:"S"},
+  {code:"292",name:"Oil Well",cat:"خدمات",type:"S"},
+  {code:"293",name:"Anchor Block",cat:"خدمات",type:"PS"},
+  {code:"294",name:"Vaporizer",cat:"خدمات",type:"S"},
+  {code:"295",name:"Meter Pressure",cat:"خدمات",type:"P"},
+  {code:"309",name:"Wood Pole Telephone",cat:"خدمات",type:"P"},
+  {code:"310",name:"Wood Pole Electric",cat:"خدمات",type:"P"},
+  {code:"313",name:"Telephone Pole",cat:"خدمات",type:"P"},
+  {code:"314",name:"Electricity Pole",cat:"خدمات",type:"PS"},
+  {code:"315",name:"Lamp Post",cat:"خدمات",type:"PS"},
+  {code:"316",name:"Pylon",cat:"خدمات",type:"PS"},
+  {code:"317",name:"Stay Wire",cat:"خدمات",type:"PS"},
+  {code:"318",name:"Safe Height Indicator",cat:"خدمات",type:"PS"},
+  {code:"319",name:"Speaker",cat:"خدمات",type:"P"},
+  {code:"323",name:"Fire Box",cat:"خدمات",type:"P"},
+  {code:"324",name:"Foam Inlet",cat:"خدمات",type:"P"},
+  {code:"325",name:"Fire Hydrant",cat:"خدمات",type:"P"},
+  {code:"326",name:"Fire Alarm",cat:"خدمات",type:"P"},
+  {code:"415",name:"Flood Light",cat:"خدمات",type:"P"},
+  {code:"425",name:"Traffic Light",cat:"خدمات",type:"P"},
+  {code:"436",name:"Valve, Irrigation",cat:"خدمات",type:"P"},
+  {code:"437",name:"Flange",cat:"خدمات",type:"P"},
+  {code:"439",name:"Tie In",cat:"خدمات",type:"P"},
+  {code:"440",name:"Valve",cat:"خدمات",type:"P"},
+  {code:"441",name:"Test Point",cat:"خدمات",type:"P"},
+  {code:"442",name:"Drain Valve",cat:"خدمات",type:"P"},
+  {code:"443",name:"Indicator",cat:"خدمات",type:"P"},
+  {code:"464",name:"Boundary Marker",cat:"خدمات",type:"P"},
+  {code:"465",name:"Marker Post, General",cat:"خدمات",type:"P"},
+  {code:"466",name:"Marker, Cable, Buried, Fibre Optic",cat:"خدمات",type:"P"},
+  {code:"467",name:"Marker, Cable, Buried, Electric, HT",cat:"خدمات",type:"P"},
+  {code:"468",name:"Marker, Cable, Buried, Telephone",cat:"خدمات",type:"P"},
+  {code:"469",name:"Marker, Pipeline, Oil",cat:"خدمات",type:"P"},
+  {code:"470",name:"Marker, Pipeline, Water",cat:"خدمات",type:"P"},
+  {code:"471",name:"Marker, Pipeline, Buried, Gas",cat:"خدمات",type:"P"},
+  {code:"472",name:"Marker, Cable, Control",cat:"خدمات",type:"P"},
+  {code:"473",name:"Marker, Cable, Buried, Cathodic Protection",cat:"خدمات",type:"P"},
+  {code:"476",name:"Gully",cat:"خدمات",type:"S"},
+  {code:"476A",name:"Road Gullies (extended)",cat:"خدمات",type:"P"},
+  {code:"613",name:"Junction Box, Telephone",cat:"خدمات",type:"PS"},
+  {code:"614",name:"Switch Box",cat:"خدمات",type:"PS"},
+  {code:"615",name:"CP Box",cat:"خدمات",type:"PS"},
+  {code:"616",name:"Junction Box, Electrical",cat:"خدمات",type:"PS"},
+  {code:"617",name:"Generator Platform",cat:"خدمات",type:"S"},
+  {code:"618",name:"Electrical Equipment Shed",cat:"خدمات",type:"S"},
+  {code:"619",name:"Control Panel",cat:"خدمات",type:"S"},
+  {code:"620",name:"Post Box",cat:"خدمات",type:"P"},
+  {code:"150",name:"Footing",cat:"خدمات",type:"PS"},
+  {code:"426",name:"Warning Light",cat:"خدمات",type:"P"},
+  {code:"145",name:"Pipe Slot",cat:"خدمات",type:"P"},
+  // PIPELINES ABOVE GROUND
+  {code:"122",name:"Flare Vertical",cat:"خطوط فوق أرض",type:"P"},
+  {code:"123",name:"Flare Horizontal",cat:"خطوط فوق أرض",type:"P"},
+  {code:"657",name:"Vent Pipe",cat:"خطوط فوق أرض",type:"P"},
+  {code:"658",name:"Electric, OverHead, Transmission Line",cat:"خطوط فوق أرض",type:"S"},
+  {code:"659",name:"Electric, OverHead, Wood Pole Line",cat:"خطوط فوق أرض",type:"S"},
+  {code:"660",name:"Telephone, Over Head, Wood Pole Line",cat:"خطوط فوق أرض",type:"S"},
+  {code:"701",name:"Pipeline, Major, Above Ground, Oil",cat:"خطوط فوق أرض",type:"S"},
+  {code:"702",name:"Pipeline, Major, Above Ground, Gas",cat:"خطوط فوق أرض",type:"S"},
+  {code:"703",name:"Pipeline, Major, Above Grd, Potable Water",cat:"خطوط فوق أرض",type:"S"},
+  {code:"704",name:"Pipeline, Major, Above Ground, General",cat:"خطوط فوق أرض",type:"S"},
+  {code:"705",name:"Pipeline Above Ground Undefined",cat:"خطوط فوق أرض",type:"S"},
+  {code:"706",name:"Pipeline, Above Ground, Sewage",cat:"خطوط فوق أرض",type:"S"},
+  {code:"707",name:"Pipeline, Above Ground, Storm Water",cat:"خطوط فوق أرض",type:"S"},
+  {code:"708",name:"Pipeline, Above Ground, Diesel",cat:"خطوط فوق أرض",type:"S"},
+  {code:"711",name:"Cable, Above Ground, Electric, HT",cat:"خطوط فوق أرض",type:"S"},
+  {code:"712",name:"Cable, Above Ground, Electric, LT",cat:"خطوط فوق أرض",type:"S"},
+  {code:"713",name:"Cable, Above Ground, Telephone",cat:"خطوط فوق أرض",type:"S"},
+  {code:"714",name:"Cable, Above Ground, Undefined",cat:"خطوط فوق أرض",type:"S"},
+  {code:"715",name:"General String",cat:"خطوط فوق أرض",type:"S"},
+  {code:"735",name:"Flowline, Above Ground Level, Fire Water",cat:"خطوط فوق أرض",type:"S"},
+  {code:"736",name:"Flowline, Above Ground Level, Drain",cat:"خطوط فوق أرض",type:"S"},
+  {code:"737",name:"Flowline, Above Ground Level, Oil",cat:"خطوط فوق أرض",type:"S"},
+  {code:"738",name:"Flowline, Above Ground Level, Gas",cat:"خطوط فوق أرض",type:"S"},
+  {code:"739",name:"Flowline, Above Ground Level, Potable Water",cat:"خطوط فوق أرض",type:"S"},
+  {code:"740",name:"Flowline, Above Ground Level, Salt Water",cat:"خطوط فوق أرض",type:"S"},
+  {code:"741",name:"Flowline, Above Ground Level, Condensate",cat:"خطوط فوق أرض",type:"S"},
+  {code:"742",name:"Flowline, Above Ground Level, Fuel Gas",cat:"خطوط فوق أرض",type:"S"},
+  {code:"791",name:"Drain, Open",cat:"خطوط فوق أرض",type:"S"},
+  {code:"709",name:"Pipeline, Above Ground, Brackish Water",cat:"خطوط فوق أرض",type:"S"},
+  // PIPELINES BURIED
+  {code:"801",name:"Pipeline, Major, Buried, Oil",cat:"خطوط مدفونة",type:"S"},
+  {code:"802",name:"Pipeline, Major, Buried, Gas",cat:"خطوط مدفونة",type:"S"},
+  {code:"803",name:"Pipeline, Major, Buried, Potable Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"804",name:"Pipeline, Major, Buried, General",cat:"خطوط مدفونة",type:"S"},
+  {code:"805",name:"Pipeline Buried Undefined",cat:"خطوط مدفونة",type:"S"},
+  {code:"806",name:"Pipeline, Buried, Sewage",cat:"خطوط مدفونة",type:"S"},
+  {code:"807",name:"Pipeline, Buried, Storm Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"808",name:"Pipeline, Buried, Diesel",cat:"خطوط مدفونة",type:"S"},
+  {code:"809",name:"Pipeline, Buried, Brackish Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"811",name:"Cable, Buried, Electric, HT",cat:"خطوط مدفونة",type:"S"},
+  {code:"812",name:"Cable, Buried, Electric, LT",cat:"خطوط مدفونة",type:"S"},
+  {code:"813",name:"Cable, Buried, Telephone",cat:"خطوط مدفونة",type:"S"},
+  {code:"814",name:"Cable, Buried, Instrumentation/Control",cat:"خطوط مدفونة",type:"S"},
+  {code:"815",name:"Cable, Buried, Cathodic Protection",cat:"خطوط مدفونة",type:"S"},
+  {code:"816",name:"Cable, Buried, Undefined",cat:"خطوط مدفونة",type:"S"},
+  {code:"817",name:"Cable, Buried, Fibre Optic",cat:"خطوط مدفونة",type:"S"},
+  {code:"818",name:"Cable Buried, Earthing",cat:"خطوط مدفونة",type:"S"},
+  {code:"835",name:"Flowline, Buried, Fire Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"836",name:"Flowline, Buried, Drain",cat:"خطوط مدفونة",type:"S"},
+  {code:"837",name:"Flowline, Buried, Oil",cat:"خطوط مدفونة",type:"S"},
+  {code:"838",name:"Flowline, Buried, Gas",cat:"خطوط مدفونة",type:"S"},
+  {code:"839",name:"Flowline, Buried, Potable Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"840",name:"Flowline, Buried, Salt Water",cat:"خطوط مدفونة",type:"S"},
+  {code:"841",name:"Flowline, Buried, Condensate",cat:"خطوط مدفونة",type:"S"},
+  {code:"842",name:"Flowline, Buried, Fuel Gas",cat:"خطوط مدفونة",type:"S"},
+  {code:"890",name:"Culvert Underground",cat:"خطوط مدفونة",type:"S"},
+  {code:"891",name:"Drain Underground",cat:"خطوط مدفونة",type:"S"},
+  // STRUCTURES
+  {code:"138",name:"Dust Bin",cat:"منشآت",type:"P"},
+  {code:"139",name:"Bus Stop",cat:"منشآت",type:"S"},
+  {code:"140",name:"Building, General",cat:"منشآت",type:"S"},
+  {code:"141",name:"Catch Basin",cat:"منشآت",type:"S"},
+  {code:"143",name:"Tank, General",cat:"منشآت",type:"S"},
+  {code:"144",name:"Oil Platform",cat:"منشآت",type:"S"},
+  {code:"167",name:"Concrete, Base/Slab/Platform",cat:"منشآت",type:"S"},
+  {code:"168",name:"Concrete, Block/Support",cat:"منشآت",type:"S"},
+  {code:"169",name:"Pipe Support, Steel",cat:"منشآت",type:"S"},
+  {code:"181",name:"Porta Cabin",cat:"منشآت",type:"S"},
+  {code:"190",name:"Culvert",cat:"منشآت",type:"S"},
+  {code:"196",name:"Canopy/Roof Line/Overhang",cat:"منشآت",type:"S"},
+  {code:"197",name:"Shed, Car Park",cat:"منشآت",type:"S"},
+  {code:"198",name:"Temporary Building Structure",cat:"منشآت",type:"S"},
+  {code:"199",name:"Traffic Control, Box",cat:"منشآت",type:"S"},
+  {code:"311",name:"Communication Tower",cat:"منشآت",type:"PS"},
+  {code:"312",name:"Garden Light",cat:"منشآت",type:"P"},
+  {code:"327",name:"Filling Point",cat:"منشآت",type:"P"},
+  {code:"328",name:"General Post",cat:"منشآت",type:"P"},
+  {code:"655",name:"Water Tap",cat:"منشآت",type:"P"},
+  {code:"656",name:"Water Sprinkler",cat:"منشآت",type:"P"},
+  {code:"130",name:"Manifold",cat:"منشآت",type:"S"},
+  // VEGETATION
+  {code:"233",name:"Line of Trees",cat:"نباتات",type:"P"},
+  {code:"234",name:"Coconut Tree",cat:"نباتات",type:"P"},
+  {code:"235",name:"Palm Tree",cat:"نباتات",type:"P"},
+  {code:"236",name:"Artificial Landscape",cat:"نباتات",type:"P"},
+  {code:"333",name:"Tree, General, Small",cat:"نباتات",type:"P"},
+  {code:"334",name:"Tree, General, Medium",cat:"نباتات",type:"P"},
+  {code:"335",name:"Tree, General, Large",cat:"نباتات",type:"P"},
+  {code:"336",name:"Vegetation/Small",cat:"نباتات",type:"P"},
+  {code:"337",name:"Vegetation, Edge",cat:"نباتات",type:"P"},
+  // SURVEY
+  {code:"184",name:"Survey Control Station",cat:"مساحة",type:"P"},
+  {code:"766",name:"Stake, Reference",cat:"مساحة",type:"P"},
+  {code:"770",name:"Control, QC, Observations",cat:"مساحة",type:"P"},
+  // DEAD END
+  {code:"700",name:"Dead End, Pipeline Above Ground",cat:"نهاية خط",type:"P"},
+  {code:"800",name:"Dead End, Pipeline Buried",cat:"نهاية خط",type:"P"},
+];
+
+// ===========================
+// APP STATE
+// ===========================
+let currentFilter = 'الكل';
+let currentTheme = localStorage.getItem('theme') || 'night';
+
+// Apply saved theme on load
+document.body.setAttribute('data-theme', currentTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes(currentTheme));
+  });
+});
+
+function setTheme(t, btn) {
+  currentTheme = t;
+  document.body.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  localStorage.setItem('theme', t);
+}
+
+// ===========================
+// BUILD FILTERS
+// ===========================
+function buildFilters() {
+  const bar = document.getElementById('filtersBar');
+  const cats = ['الكل', ...new Set(CODES.map(c => c.cat))];
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (cat === 'الكل' ? ' active' : '');
+    const icon = CAT_ICONS[cat] || '📌';
+    btn.innerHTML = `${icon} ${cat}`;
+    btn.onclick = () => {
+      currentFilter = cat;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('activeFilter').textContent = cat !== 'الكل' ? `• ${cat}` : '';
+      renderCards();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// ===========================
+// RENDER CARDS
+// ===========================
+function getFiltered(q) {
+  let data = CODES;
+  if (currentFilter !== 'الكل') data = data.filter(c => c.cat === currentFilter);
+  if (q) {
+    const lq = q.toLowerCase().trim();
+    data = data.filter(c =>
+      c.code.toLowerCase().includes(lq) ||
+      c.name.toLowerCase().includes(lq) ||
+      c.cat.includes(lq)
+    );
+  }
+  return data;
+}
+
+function renderCards() {
+  const q = document.getElementById('searchInput').value;
+  const data = getFiltered(q);
+  const container = document.getElementById('cardsContainer');
+  document.getElementById('resultsCount').textContent = data.length;
+  document.getElementById('totalBadge').textContent = CODES.length;
+
+  if (data.length === 0) {
+    container.innerHTML = `<div class="no-results">
+      <div class="nr-icon">🔎</div>
+      <div class="nr-msg">لا توجد نتائج</div>
+      <div style="font-size:12px">جرب كلمة أخرى أو تغيير الفلتر</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(item => {
+    const icon = getIcon(item.name, item.cat);
+    const dotCls = item.type === 'PS' ? 'dot-PS' : `dot-${item.type}`;
+    return `<div class="card" onclick="openModal('${item.code}')">
+      <div class="card-type-dot ${dotCls}"></div>
+      <span class="card-icon">${icon}</span>
+      <div class="card-code">${item.code}</div>
+      <div class="card-name">${item.name}</div>
+      <div class="card-cat">${CAT_ICONS[item.cat]||''} ${item.cat}</div>
+      <div class="type-lbl ${item.type}">${item.type}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===========================
+// MODAL
+// ===========================
+function openModal(code) {
+  const item = CODES.find(c => c.code === code);
+  if (!item) return;
+  const icon = getIcon(item.name, item.cat);
+  document.getElementById('modalIcon').textContent = icon;
+  document.getElementById('modalCode').textContent = item.code;
+  document.getElementById('modalName').textContent = item.name;
+  const typeMap = { P:'🟢 نقطة (P)', S:'🔵 خط (S)', PS:'🟡 نقطة / خط' };
+  document.getElementById('modalType').textContent = typeMap[item.type] || item.type;
+  document.getElementById('modalCat').textContent = (CAT_ICONS[item.cat]||'') + ' ' + item.cat;
+  document.getElementById('modalOverlay').classList.add('open');
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = '📋 نسخ الكود  ' + item.code;
+  copyBtn.onclick = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(item.code).then(() => {
+        copyBtn.textContent = '✅ تم النسخ بنجاح!';
+        setTimeout(() => { copyBtn.textContent = '📋 نسخ الكود  ' + item.code; }, 1800);
+      }).catch(() => fallbackCopy(item.code, copyBtn));
+    } else {
+      fallbackCopy(item.code, copyBtn);
+    }
+  };
+}
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); btn.textContent = '✅ تم النسخ!'; }
+  catch { btn.textContent = 'الكود: ' + text; }
+  document.body.removeChild(ta);
+  setTimeout(() => { btn.textContent = '📋 نسخ الكود  ' + text; }, 1800);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModalOut(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+// ===========================
+// SEARCH
+// ===========================
+function onSearch(el) {
+  document.getElementById('clearBtn').classList.toggle('show', el.value.length > 0);
+  renderCards();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').classList.remove('show');
+  renderCards();
+}
+
+// ===========================
+// INIT
+// ===========================
+buildFilters();
+renderCards();
+
+// Keyboard close modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ===========================
+// PWA INSTALL
+// ===========================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  const b = document.getElementById('installBanner');
+  if (b) b.style.display = 'flex';
+});
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      const b = document.getElementById('installBanner');
+      if (b) b.style.display = 'none';
+    });
+  }
+}
+</script>
+</body>
+</html>
